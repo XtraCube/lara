@@ -9,5 +9,6 @@
 #import "offsets.h"
 #import "utils.h"
 #import "vfs.h"
+#import "sbx.h"
 
 void test(NSString *path);

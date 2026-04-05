@@ -67,7 +67,6 @@ struct SettingsView: View {
                         }
                     }
                     .pickerStyle(.segmented)
-                    .disabled(true)
                 } header: {
                     Text("Method")
                 } footer: {

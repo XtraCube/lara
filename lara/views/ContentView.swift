@@ -10,6 +10,7 @@ import UniformTypeIdentifiers
 
 struct ContentView: View {
     @AppStorage("showfmintabs") private var showfmintabs: Bool = true
+    @AppStorage("selectedmethod") private var selectedmethod: method = .vfs
     @ObservedObject private var mgr = laramgr.shared
     @State private var uid: uid_t = getuid()
     @State private var pid: pid_t = getpid()
@@ -105,84 +106,126 @@ struct ContentView: View {
                         }
                     }
 
-                    Section("Virtual File System") {
-                        Button {
-                            mgr.vfsinit()
-                        } label: {
-                            if mgr.vfsrunning {
-                                HStack {
-                                    ProgressView(value: mgr.vfsprogress)
-                                        .progressViewStyle(.circular)
-                                        .frame(width: 18, height: 18)
-                                    Text("Initialising VFS...")
-                                    Spacer()
-                                    Text("\(Int(mgr.vfsprogress * 100))%")
-                                }
-                            } else if !mgr.vfsready {
-                                if mgr.vfsattempted && mgr.vfsfailed {
+                    Section(selectedmethod == .vfs ? "Virtual File System" : "Sandbox Escape") {
+                        if selectedmethod == .vfs {
+                            Button {
+                                mgr.vfsinit()
+                            } label: {
+                                if mgr.vfsrunning {
                                     HStack {
-                                        Text("VFS Init Failed")
+                                        ProgressView(value: mgr.vfsprogress)
+                                            .progressViewStyle(.circular)
+                                            .frame(width: 18, height: 18)
+                                        Text("Initialising VFS...")
                                         Spacer()
-                                        Image(systemName: "xmark.circle")
-                                            .foregroundColor(.red)
+                                        Text("\(Int(mgr.vfsprogress * 100))%")
+                                    }
+                                } else if !mgr.vfsready {
+                                    if mgr.vfsattempted && mgr.vfsfailed {
+                                        HStack {
+                                            Text("VFS Init Failed")
+                                            Spacer()
+                                            Image(systemName: "xmark.circle")
+                                                .foregroundColor(.red)
+                                        }
+                                    } else {
+                                        Text("Initialise VFS")
                                     }
                                 } else {
-                                    Text("Initialise VFS")
-                                }
-                            } else {
-                                HStack {
-                                    Text("Initialised VFS")
-                                    Spacer()
-                                    Image(systemName: "checkmark.circle")
-                                        .foregroundColor(.green)
+                                    HStack {
+                                        Text("Initialised VFS")
+                                        Spacer()
+                                        Image(systemName: "checkmark.circle")
+                                            .foregroundColor(.green)
+                                    }
                                 }
                             }
-                        }
-                        .disabled(!mgr.dsready || mgr.vfsready || mgr.vfsrunning)
-                        
-                        if mgr.vfsready {
-                            NavigationLink("Font Overwrite") {
-                                FontPicker(mgr: mgr)
-                            }
-                            
-                            NavigationLink("DirtyZero (Broken)") {
-                                ZeroView(mgr: mgr)
-                            }
+                            .disabled(!mgr.dsready || mgr.vfsready || mgr.vfsrunning)
 
-                            if !showfmintabs {
-                                NavigationLink("File Manager") {
-                                    SantanderView(startPath: "/")
+                            if mgr.vfsready {
+                                NavigationLink("Font Overwrite") {
+                                    FontPicker(mgr: mgr)
+                                }
+
+                                NavigationLink("DirtyZero (Broken)") {
+                                    ZeroView(mgr: mgr)
+                                }
+
+                                if !showfmintabs {
+                                    NavigationLink("File Manager") {
+                                        SantanderView(startPath: "/")
+                                    }
                                 }
                             }
-                            
-                            if 1 == 2 {
+                        } else {
+                            Button {
+                                mgr.sbxescape()
+                            } label: {
+                                if mgr.sbxrunning {
+                                    HStack {
+                                        ProgressView()
+                                            .progressViewStyle(.circular)
+                                            .frame(width: 18, height: 18)
+                                        Text("Escaping Sandbox...")
+                                    }
+                                } else if !mgr.sbxready {
+                                    if mgr.sbxattempted && mgr.sbxfailed {
+                                        HStack {
+                                            Text("Sandbox Escape Failed")
+                                            Spacer()
+                                            Image(systemName: "xmark.circle")
+                                                .foregroundColor(.red)
+                                        }
+                                    } else {
+                                        Text("Escape Sandbox")
+                                    }
+                                } else {
+                                    HStack {
+                                        Text("Sandbox Escaped")
+                                        Spacer()
+                                        Image(systemName: "checkmark.circle")
+                                            .foregroundColor(.green)
+                                    }
+                                }
+                            }
+                            .disabled(!mgr.dsready || mgr.sbxready || mgr.sbxrunning)
+
+                            if mgr.sbxready {
+                                if !showfmintabs {
+                                    NavigationLink("File Manager") {
+                                        SantanderView(startPath: "/")
+                                    }
+                                }
+                                
                                 NavigationLink("3 App Bypass") {
                                     AppsView(mgr: mgr)
                                 }
                                 
-                                NavigationLink("Passcode Theme") {
-                                    PasscodeView(mgr: mgr)
-                                }
-                                
-                                NavigationLink("Unblacklist") {
-                                    WhitelistView()
-                                }
+                                if 1 == 2 {
+                                    NavigationLink("Passcode Theme") {
+                                        PasscodeView(mgr: mgr)
+                                    }
 
-                                NavigationLink("MobileGestalt") {
-                                    EditorView()
+                                    NavigationLink("Unblacklist") {
+                                        WhitelistView()
+                                    }
+
+                                    NavigationLink("MobileGestalt") {
+                                        EditorView()
+                                    }
                                 }
                             }
                         }
-                        
+
                         HStack {
                             Text("UID:")
-                            
+
                             Spacer()
-                            
+
                             Text("\(uid)")
                                 .font(.system(.body, design: .monospaced))
                                 .foregroundColor(.secondary)
-                            
+
                             Button {
                                 uid = getuid()
                                 print(uid)
@@ -190,16 +233,16 @@ struct ContentView: View {
                                 Image(systemName: "arrow.clockwise")
                             }
                         }
-                        
+
                         HStack {
                             Text("PID:")
-                            
+
                             Spacer()
-                            
+
                             Text("\(pid)")
                                 .font(.system(.body, design: .monospaced))
                                 .foregroundColor(.secondary)
-                            
+
                             Button {
                                 pid = getpid()
                                 print(pid)
@@ -208,7 +251,6 @@ struct ContentView: View {
                             }
                         }
                     }
-                    
                     Section {
                         NavigationLink("Tools") {
                             ToolsView()

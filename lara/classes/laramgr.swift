@@ -30,6 +30,10 @@ final class laramgr: ObservableObject {
     @Published var vfsfailed: Bool = false
     @Published var vfsrunning: Bool = false
     @Published var vfsprogress: Double = 0.0
+    @Published var sbxready: Bool = false
+    @Published var sbxattempted: Bool = false
+    @Published var sbxfailed: Bool = false
+    @Published var sbxrunning: Bool = false
     
     static let shared = laramgr()
     static let fontpath = "/System/Library/Fonts/Core/SFUI.ttf"
@@ -128,6 +132,7 @@ final class laramgr: ObservableObject {
     
     func respring() {
         notify_post("com.apple.springboard.toggleLockScreen")
+        // killproc("springboard")
     }
     
     func vfsinit(completion: ((Bool) -> Void)? = nil) {
@@ -141,7 +146,7 @@ final class laramgr: ObservableObject {
         vfsfailed = false
         vfsrunning = true
         vfsprogress = 0.0
-        
+
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let r = vfs_init()
             DispatchQueue.main.async {
@@ -158,6 +163,39 @@ final class laramgr: ObservableObject {
                 self.vfsprogress = 1.0
                 completion?(self.vfsready)
             }
+        }
+    }
+
+    func sbxescape(completion: ((Bool) -> Void)? = nil) {
+        guard dsready, !sbxrunning else { return }
+        sbxattempted = true
+        sbxfailed = false
+        sbxrunning = true
+
+        sbx_setlogcallback(laramgr.sbxlogcallback)
+
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let r = sbx_escape(ds_get_our_proc())
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.sbxready = (r == 0)
+                if self.sbxready {
+                    self.sbxfailed = false
+                    self.logmsg("\nsandbox escape ready!\n")
+                } else {
+                    self.sbxfailed = true
+                    self.logmsg("\nsandbox escape failed.\n")
+                }
+                self.sbxrunning = false
+                completion?(self.sbxready)
+            }
+        }
+    }
+    private static let sbxlogcallback: @convention(c) (UnsafePointer<CChar>?) -> Void = { msg in
+        guard let msg = msg else { return }
+        let s = String(cString: msg)
+        DispatchQueue.main.async {
+            laramgr.shared.logmsg("(sbx) " + s)
         }
     }
 

@@ -11,7 +11,7 @@
 		9F4A1D2F3C4E567890123456 /* lara/lib/libxpf.dylib in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 9F4A1D2E3C4E567890123456 /* lara/lib/libxpf.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		9F4A1D403C4E567890123456 /* lara/lib/libgrabkernel2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9F4A1D413C4E567890123456 /* lara/lib/libgrabkernel2.dylib */; };
 		9F4A1D423C4E567890123456 /* lara/lib/libgrabkernel2.dylib in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 9F4A1D413C4E567890123456 /* lara/lib/libgrabkernel2.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		CC70C4AF2F79BCEE0052726B /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = CC70C4AE2F79BCEE0052726B /* ZIPFoundation */; };
+		CCF37D652F81D1B600DF4745 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = CCF37D642F81D1B600DF4745 /* ZIPFoundation */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -65,7 +65,7 @@
 			files = (
 				9F4A1D2D3C4E567890123456 /* lara/lib/libxpf.dylib in Frameworks */,
 				9F4A1D403C4E567890123456 /* lara/lib/libgrabkernel2.dylib in Frameworks */,
-				CC70C4AF2F79BCEE0052726B /* ZIPFoundation in Frameworks */,
+				CCF37D652F81D1B600DF4745 /* ZIPFoundation in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -120,7 +120,7 @@
 			);
 			name = lara;
 			packageProductDependencies = (
-				CC70C4AE2F79BCEE0052726B /* ZIPFoundation */,
+				CCF37D642F81D1B600DF4745 /* ZIPFoundation */,
 			);
 			productName = lara;
 			productReference = CC1C8B392F71DF9C00206982 /* lara.app */;
@@ -151,7 +151,7 @@
 			mainGroup = CC1C8B302F71DF9C00206982;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				CC70C4AD2F79BCEE0052726B /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
+				CCF37D632F81D1B600DF4745 /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = CC1C8B3A2F71DF9C00206982 /* Products */;
@@ -425,7 +425,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		CC70C4AD2F79BCEE0052726B /* XCRemoteSwiftPackageReference "ZIPFoundation" */ = {
+		CCF37D632F81D1B600DF4745 /* XCRemoteSwiftPackageReference "ZIPFoundation" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/weichsel/ZIPFoundation.git";
 			requirement = {
@@ -436,9 +436,9 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		CC70C4AE2F79BCEE0052726B /* ZIPFoundation */ = {
+		CCF37D642F81D1B600DF4745 /* ZIPFoundation */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = CC70C4AD2F79BCEE0052726B /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
+			package = CCF37D632F81D1B600DF4745 /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
 			productName = ZIPFoundation;
 		};
 /* End XCSwiftPackageProductDependency section */

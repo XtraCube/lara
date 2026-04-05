@@ -40,6 +40,32 @@ struct ToolsView: View {
             } footer: {
                 Text("Address Space Layout Randomization. Turning it on may break lara.")
             }
+            
+            Section {
+                Button {
+                    killproc("springboard")
+                } label: {
+                    Text("Respring (probably broken)")
+                }
+                
+                HStack {
+                    Text("ourproc: ")
+                    Spacer()
+                    Text(String(format: "0x%llx", ds_get_our_proc()))
+                        .foregroundColor(.secondary)
+                        .monospaced()
+                }
+                
+                HStack {
+                    Text("ourtask: ")
+                    Spacer()
+                    Text(String(format: "0x%llx", ds_get_our_task()))
+                        .foregroundColor(.secondary)
+                        .monospaced()
+                }
+            } header: {
+                Text("proc")
+            }
         }
         .navigationTitle("Tools")
     }

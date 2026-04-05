@@ -17,6 +17,7 @@ struct lara: App {
     @State private var selectedtab: Int = 1
     private let keepalivekey = "keepalive"
     @AppStorage("showfmintabs") private var showfmintabs: Bool = true
+    @AppStorage("selectedmethod") private var selectedmethod: method = .vfs
 
     init() {
         if g_isunsupported {
@@ -41,7 +42,9 @@ struct lara: App {
     var body: some Scene {
         WindowGroup {
             TabView(selection: $selectedtab) {
-                if mgr.vfsready && showfmintabs {
+                let fmReady = (selectedmethod == .vfs && mgr.vfsready) || (selectedmethod == .sbx && mgr.sbxready)
+
+                if fmReady && showfmintabs {
                     SantanderView(startPath: "/")
                         .tabItem {
                             Image(systemName: "document.badge.gearshape.fill")

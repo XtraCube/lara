@@ -13,6 +13,7 @@ import QuickLook
 
 struct SantanderView: View {
     let startPath: String
+    @AppStorage("selectedmethod") private var selectedmethod: method = .vfs
     @ObservedObject private var mgr = laramgr.shared
 
     init(startPath: String = "/") {
@@ -20,17 +21,18 @@ struct SantanderView: View {
     }
 
     var body: some View {
+        let ready = (selectedmethod == .vfs) ? mgr.vfsready : mgr.sbxready
         Group {
-            if mgr.vfsready {
+            if ready {
                 SantanderBrowserSheet(startPath: startPath)
                     .ignoresSafeArea()
             } else {
                 VStack(spacing: 12) {
                     Image(systemName: "externaldrive")
                         .font(.system(size: 36, weight: .semibold))
-                    Text("VFS not ready")
+                    Text(selectedmethod == .vfs ? "VFS not ready" : "Sandbox escape not ready")
                         .font(.headline)
-                    Text("Run exploit and VFS init first.")
+                    Text(selectedmethod == .vfs ? "Run exploit and VFS init first." : "Run exploit and SBX escape first.")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
@@ -42,9 +44,11 @@ struct SantanderView: View {
 
 struct SantanderBrowserSheet: UIViewControllerRepresentable {
     let startPath: String
+    @AppStorage("selectedmethod") private var selectedmethod: method = .vfs
 
     func makeUIViewController(context: Context) -> UINavigationController {
-        let root = SantanderPathListViewController(path: SantanderPath(path: startPath, isDirectory: true))
+        let useSBX = (selectedmethod == .sbx)
+        let root = SantanderPathListViewController(path: SantanderPath(path: startPath, isDirectory: true), useSBX: useSBX)
         return UINavigationController(rootViewController: root)
     }
 
@@ -80,12 +84,14 @@ final class SantanderPathListViewController: UITableViewController, UISearchResu
     private var unfilteredContents: [SantanderPath]
     private var renderedContents: [SantanderPath]
     private let currentPath: SantanderPath
+    private let useSBX: Bool
     private let initialEmptyStateMessage: String?
     private var isSearching = false
     private var displayHiddenFiles = true
 
-    init(path: SantanderPath) {
-        let initialListing = Self.loadDirectoryContents(for: path)
+    init(path: SantanderPath, useSBX: Bool) {
+        self.useSBX = useSBX
+        let initialListing = Self.loadDirectoryContents(for: path, useSBX: useSBX)
         self.currentPath = path
         self.unfilteredContents = initialListing.items
         self.renderedContents = initialListing.items
@@ -140,10 +146,10 @@ final class SantanderPathListViewController: UITableViewController, UISearchResu
         tableView.deselectRow(at: indexPath, animated: true)
         let path = renderedContents[indexPath.row]
         if path.isDirectory {
-            let vc = SantanderPathListViewController(path: path)
+            let vc = SantanderPathListViewController(path: path, useSBX: useSBX)
             navigationController?.pushViewController(vc, animated: true)
         } else {
-            let vc = SantanderFileReaderViewController(path: path)
+            let vc = SantanderFileReaderViewController(path: path, useSBX: useSBX)
             navigationController?.pushViewController(vc, animated: true)
         }
     }
@@ -187,10 +193,15 @@ final class SantanderPathListViewController: UITableViewController, UISearchResu
         tableView.backgroundView = label
     }
 
-    private static func loadDirectoryContents(for path: SantanderPath) -> (items: [SantanderPath], emptyStateMessage: String?) {
+    private static func loadDirectoryContents(for path: SantanderPath, useSBX: Bool) -> (items: [SantanderPath], emptyStateMessage: String?) {
         guard path.isDirectory else { return ([], "Not a directory.") }
 
         let mgr = laramgr.shared
+        if useSBX {
+            guard mgr.sbxready else { return ([], "Sandbox escape not ready.") }
+            return loadDirectoryContentsSBX(for: path)
+        }
+
         guard mgr.vfsready else { return ([], "VFS not ready.") }
         guard let entries = mgr.vfslistdir(path: path.path) else {
             return ([], "Unable to list directory.")
@@ -209,6 +220,31 @@ final class SantanderPathListViewController: UITableViewController, UISearchResu
         return (items, nil)
     }
 
+    private static func loadDirectoryContentsSBX(for path: SantanderPath) -> (items: [SantanderPath], emptyStateMessage: String?) {
+        let fm = FileManager.default
+        do {
+            let entries = try fm.contentsOfDirectory(atPath: path.path)
+            let items = entries.map { name in
+                let fullPath = path.path == "/" ? "/" + name : path.path + "/" + name
+                var isDir: ObjCBool = false
+                fm.fileExists(atPath: fullPath, isDirectory: &isDir)
+                return SantanderPath(path: fullPath, isDirectory: isDir.boolValue)
+            }
+            if items.isEmpty {
+                return ([], "Directory is empty.")
+            }
+            return (items, nil)
+        } catch {
+            return ([], "Unable to list directory.")
+        }
+    }
+
+    private static func isSBXSelected() -> Bool {
+        if let raw = UserDefaults.standard.string(forKey: "selectedmethod") {
+            return raw.uppercased() == "SBX"
+        }
+        return false
+    }
     private func setRightBarButton() {
         let menuButton = UIBarButtonItem(
             image: UIImage(systemName: "ellipsis.circle"),
@@ -245,12 +281,12 @@ final class SantanderPathListViewController: UITableViewController, UISearchResu
         }
         let goRoot = UIAction(title: "Go to Root", image: UIImage(systemName: "externaldrive")) { [weak self] _ in
             guard let self else { return }
-            let vc = SantanderPathListViewController(path: SantanderPath(path: "/", isDirectory: true))
+            let vc = SantanderPathListViewController(path: SantanderPath(path: "/", isDirectory: true), useSBX: useSBX)
             self.navigationController?.setViewControllers([vc], animated: true)
         }
         let goHome = UIAction(title: "Go to Home", image: UIImage(systemName: "house")) { [weak self] _ in
             guard let self else { return }
-            let vc = SantanderPathListViewController(path: SantanderPath(path: NSHomeDirectory(), isDirectory: true))
+            let vc = SantanderPathListViewController(path: SantanderPath(path: NSHomeDirectory(), isDirectory: true), useSBX: useSBX)
             self.navigationController?.setViewControllers([vc], animated: true)
         }
         let sortMenu = UIMenu(title: "Sort by..", image: UIImage(systemName: "arrow.up.arrow.down"), children: [sortAZ, sortZA])
@@ -292,11 +328,7 @@ final class SantanderPathListViewController: UITableViewController, UISearchResu
     }
 
     private func shouldShowFooter() -> Bool {
-        let raw = UserDefaults.standard.string(forKey: "selectedmethod")
-        if let raw {
-            return raw == "VFS"
-        }
-        return true
+        return !useSBX
     }
 
     @objc private func showInfo() {
@@ -313,6 +345,7 @@ final class SantanderPathListViewController: UITableViewController, UISearchResu
 }
 
 final class SantanderFileReaderViewController: UIViewController, QLPreviewControllerDataSource {
+    private let usingSBX: Bool
     private let path: SantanderPath
     private let textView = UITextView()
     private let imageView = UIImageView()
@@ -320,8 +353,9 @@ final class SantanderFileReaderViewController: UIViewController, QLPreviewContro
     private var tempURL: URL?
     private var tempSize: Int64 = 0
 
-    init(path: SantanderPath) {
+    init(path: SantanderPath, useSBX: Bool) {
         self.path = path
+        self.usingSBX = useSBX
         super.init(nibName: nil, bundle: nil)
         self.title = path.lastPathComponent
     }
@@ -367,6 +401,49 @@ final class SantanderFileReaderViewController: UIViewController, QLPreviewContro
 
     private func loadFile() {
         let mgr = laramgr.shared
+        if usingSBX {
+            if let type = path.contentType {
+                if type.isSubtype(of: .image) {
+                    guard let data = readFileSBX(maxBytes: 8 * 1024 * 1024) else {
+                        textView.text = "Failed to read file."
+                        return
+                    }
+                    if let image = UIImage(data: data) {
+                        imageView.image = image
+                        imageView.isHidden = false
+                        textView.isHidden = true
+                        return
+                    }
+                }
+
+                if type.isSubtype(of: .audio) || type.isSubtype(of: .movie) || type.isSubtype(of: .video) {
+                    if prepareTempFileIfNeeded(maxBytes: 128 * 1024 * 1024) {
+                        let player = AVPlayer(url: tempURL!)
+                        let pvc = AVPlayerViewController()
+                        pvc.player = player
+                        addChild(pvc)
+                        pvc.view.frame = view.bounds
+                        pvc.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+                        view.addSubview(pvc.view)
+                        pvc.didMove(toParent: self)
+                        playerVC = pvc
+                        player.play()
+                        return
+                    } else {
+                        textView.text = "Failed to prepare media file."
+                        return
+                    }
+                }
+            }
+
+            guard let data = readFileSBX(maxBytes: 2 * 1024 * 1024) else {
+                textView.text = "Failed to read file."
+                return
+            }
+            textView.text = render(data: data)
+            return
+        }
+
         if let type = path.contentType {
             if type.isSubtype(of: .image) {
                 guard let data = mgr.vfsread(path: path.path, maxSize: 8 * 1024 * 1024) else {
@@ -408,6 +485,24 @@ final class SantanderFileReaderViewController: UIViewController, QLPreviewContro
         textView.text = render(data: data)
     }
 
+    private func readFileSBX(maxBytes: Int) -> Data? {
+        let url = URL(fileURLWithPath: path.path)
+        guard let handle = try? FileHandle(forReadingFrom: url) else { return nil }
+        defer { try? handle.close() }
+        if #available(iOS 13.4, *) {
+            return try? handle.read(upToCount: maxBytes) ?? Data()
+        }
+        return handle.readData(ofLength: maxBytes)
+    }
+
+    private func fileSizeSBX() -> Int64? {
+        if let attrs = try? FileManager.default.attributesOfItem(atPath: path.path),
+           let size = attrs[.size] as? NSNumber {
+            return size.int64Value
+        }
+        return nil
+    }
+
     private func render(data: Data) -> String {
         if let s = String(data: data, encoding: .utf8) {
             return s
@@ -447,6 +542,18 @@ final class SantanderFileReaderViewController: UIViewController, QLPreviewContro
 
     private func prepareTempFileIfNeeded(maxBytes: Int64) -> Bool {
         if let url = tempURL, FileManager.default.fileExists(atPath: url.path) { return true }
+
+        if usingSBX {
+            guard let size = fileSizeSBX(), size > 0 else { return false }
+            if size > maxBytes {
+                textView.text = "File too large to preview (\(size) bytes)."
+                return false
+            }
+            tempURL = URL(fileURLWithPath: path.path)
+            tempSize = size
+            return true
+        }
+
         let size = vfs_filesize(path.path)
         guard size > 0 else { return false }
         if size > maxBytes {
