@@ -1,5 +1,30 @@
-# lara
-a beautiful kexploit.
+<div align="center">
+  <br>
+  <a href="https://discord.gg/gw8PcRF3Jr"><img src="https://github.com/rooootdev/lara/blob/main/lara.png?raw=true" alt="JESSI Logo" width="200"></a>
+  <br>
+  <h1>LARA</h1>
+</div>
+
+<p align="center">
+  <a href="https://discord.gg/gw8PcRF3Jr">
+    <img src="https://img.shields.io/badge/Discord-Join%20Server-7289DA.svg" alt="Discord">
+  </a>
+  <a href="https://github.com/rooootdev/lara/stargazers">
+    <img src="https://img.shields.io/github/stars/rooootdev/lara?style=social" alt="GitHub stars">
+  </a>
+  <a href="https://github.com/rooootdev/lara/issues">
+    <img src="https://img.shields.io/github/issues/rooootdev/lara" alt="GitHub issues">
+  </a>
+  <a href="https://github.com/rooootdev/lara/releases">
+    <img src="https://img.shields.io/github/v/release/rooootdev/lara" alt="Release">
+  </a>
+</p>
+
+<p align="center">
+  <a href="#support">support</a> •
+  <a href="#features">features</a> •
+  <a href="#installation">installation</a>
+</p>
 > star this repo please :P
 
 ## support
