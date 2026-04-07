@@ -83,8 +83,8 @@ jobs:
       - name: create new release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: LARA_VERSION
-          name: Lara v$LARA_VERSION
+          tag_name: v${{ env.LARA_VERSION }}
+          name: Lara v${{ env.LARA_VERSION }}
           body: ${{ env.COMMITS }}
           files: build/lara.ipa
         env:
