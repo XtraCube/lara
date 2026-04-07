@@ -62,11 +62,29 @@ jobs:
           echo "$COMMITS" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
+      - name: delete old release
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const releases = await github.rest.repos.listReleases({
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+
+            for (var release : releases) {
+              await github.rest.repos.deleteRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: release.id
+              });
+            }
+
       - name: create new release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: LARA_VERSION
-          name: Lara vLARA_VERSION
+          name: Lara v$LARA_VERSION
           body: ${{ env.COMMITS }}
           files: build/lara.ipa
         env:
