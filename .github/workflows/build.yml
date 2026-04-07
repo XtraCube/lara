@@ -8,6 +8,9 @@ on:
 permissions:
   contents: write
 
+env:
+  LARA_VERSION: 1.2-ci.${{ github.run_number }}
+
 jobs:
   build:
     runs-on: macos-14
@@ -30,6 +33,7 @@ jobs:
             -scheme lara \
             -configuration Debug \
             -sdk iphoneos \
+            -version $LARA_VERSION \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
@@ -46,12 +50,6 @@ jobs:
           cp -R "$APP_PATH" "$PWD/build/Payload/"
           (cd "$PWD/build" && /usr/bin/zip -qry lara.ipa Payload)
 
-      - name: create release tag
-        id: tag
-        run: |
-          TAG="build_$(date +'%Y%m%d%H%M%S')-$(git rev-parse --short HEAD)"
-          echo "TAG=$TAG" >> $GITHUB_ENV
-
       - name: get last 12h commits
         id: commits
         run: |
@@ -64,30 +62,11 @@ jobs:
           echo "$COMMITS" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-      - name: delete old release
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const releases = await github.rest.repos.listReleases({
-              owner: context.repo.owner,
-              repo: context.repo.repo
-            });
-
-            const latestRelease = releases.data.find(r => r.tag_name === 'latest');
-            if (latestRelease) {
-              await github.rest.repos.deleteRelease({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                release_id: latestRelease.id
-              });
-            }
-
       - name: create new release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: latest
-          name: Latest Build
+          tag_name: LARA_VERSION
+          name: Lara vLARA_VERSION
           body: ${{ env.COMMITS }}
           files: build/lara.ipa
         env:
