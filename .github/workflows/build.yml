@@ -72,7 +72,7 @@ jobs:
               repo: context.repo.repo
             });
 
-            for (var release : releases) {
+            for (const release of releases.data) {
               await github.rest.repos.deleteRelease({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
